@@ -1,0 +1,76 @@
+\lstdefinelanguage{CSharp}
+{
+ morecomment = [l]{//}, 
+ morecomment = [l]{///},
+ morecomment = [s]{/*}{*/},
+ morestring=[b]", 
+ morestring=[b]', 
+ sensitive = true,
+ morekeywords = [1]{abstract,  event,  new,  struct, var,
+   as,  explicit,  null,  switch,
+   base,  extern,  object,  this,
+   bool,  false,  operator,  throw,
+   break,  finally,  out,  true,
+   byte,  fixed,  override,  try,
+   case,  float,  params,  typeof,
+   catch,  for,  private,  uint,
+   char,  foreach,  protected,  ulong,
+   checked,  goto,  public,  unchecked,
+   class,  if,  readonly,  unsafe,
+   const,  implicit,  ref,  ushort,
+   continue,  in,  return,  using,
+   decimal,  int,  sbyte,  virtual,
+   default,  interface,  sealed,  volatile,
+   delegate,  internal,  short,  void,
+   do,  is,  sizeof,  while,
+   double,  lock,  stackalloc,   
+   else,  long,  static, yield,
+   enum,  namespace,  string},
+ morekeywords = [2]{String, Color,
+  Console, ICollection, IEnumerable, List, IList, Func, Action, Dictionary,
+  Period, Assert, NotImplementedException, PeriodExtension
+  }
+}
+\lstset{ % Sets default values for the listing environments
+	tabsize=2,
+	basicstyle=\footnotesize,%\scriptsize,
+	escapechar=§,
+	%upquote=true,
+	aboveskip={5mm},
+	belowskip={5mm},
+	columns=fixed,
+	showstringspaces=false,
+	extendedchars=true,
+	breaklines=false,
+	prebreak = \raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+	frame=single,
+	rulecolor=\color[rgb]{0.8,0.85,0.95},
+	showtabs=false,
+	showspaces=false,
+	showstringspaces=false,
+	identifierstyle=\ttfamily,
+	keywordstyle=\ttfamily \color[rgb]{0,0,1}, %Standard keywords
+	keywordstyle=[2]\ttfamily \color[rgb]{0.17,0.57,0.69}, %My keywords
+	commentstyle=\ttfamily \color[rgb]{0.133,0.545,0.133},
+	stringstyle=\ttfamily \color[rgb]{0.64,0.08,0.08},
+	numbers=left, numberstyle=\tiny, numbersep=5pt,
+	escapeinside={@}{@},
+%	framexleftmargin=17pt,
+%	framexrightmargin=5pt,
+%	framexbottommargin=4pt,
+%	framextopmargin=1pt,
+	language=CSharp
+}
+
+%\DeclareCaptionFont{white}{\color{white}}
+%\DeclareCaptionFormat{listing}{\colorbox{gray}{\parbox{\textwidth}{#1#2#3}}}
+%\captionsetup[lstlisting]{format=listing,labelfont=white,textfont=white}
+
+\lstnewenvironment{code}[1][]%
+  {\minipage{\linewidth} 
+   \lstset{basicstyle=\ttfamily\scriptsize,frame=single,#1}}
+  {\endminipage}
+
+\makeatletter
+\lst@AddToHook{TextStyle}{\let\lst@basicstyle\ttfamily\normalsize\fontfamily{pcr}\selectfont}
+\makeatother

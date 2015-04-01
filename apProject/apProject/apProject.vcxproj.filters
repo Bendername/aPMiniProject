@@ -18,21 +18,54 @@
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="A.cpp">
+    <ClCompile Include="VB.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="B.cpp">
+    <ClCompile Include="D1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AB.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Couter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D4.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D3.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D5.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="A.h">
+    <ClInclude Include="VB.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Base.h">
+    <ClInclude Include="D1.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="B.h">
+    <ClInclude Include="AB.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Couter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D4.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D5.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -64,14 +64,25 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="A.cpp" />
-    <ClCompile Include="B.cpp" />
+    <ClCompile Include="AB.cpp" />
+    <ClCompile Include="Couter.cpp" />
+    <ClCompile Include="D1.cpp" />
+    <ClCompile Include="D2.cpp" />
+    <ClCompile Include="D3.cpp" />
+    <ClCompile Include="D4.cpp" />
+    <ClCompile Include="D5.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="VB.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="A.h" />
-    <ClInclude Include="B.h" />
-    <ClInclude Include="Base.h" />
+    <ClInclude Include="AB.h" />
+    <ClInclude Include="Couter.h" />
+    <ClInclude Include="D1.h" />
+    <ClInclude Include="D2.h" />
+    <ClInclude Include="D3.h" />
+    <ClInclude Include="D4.h" />
+    <ClInclude Include="D5.h" />
+    <ClInclude Include="VB.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

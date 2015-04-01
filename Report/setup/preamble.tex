@@ -1,0 +1,203 @@
+\documentclass[twoside,a4paper,xcolor=table..]{article}
+
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{ae,aecompl} % Fixing the font issue - source: http://dsanta.users.ch/resources/type1.html
+\usepackage[square]{natbib}
+\usepackage{dk-bib}
+\usepackage[table]{xcolor} % For alternating table row colors
+\usepackage{multirow} % For tables... well I guess you can tell what it does, right?
+\usepackage{chngpage} % For centering stuff that just doesn't want to be centered
+\usepackage{lastpage}
+\usepackage{fancyhdr}
+\usepackage{verbatim}
+\usepackage{fncychap}
+\usepackage{todonotes}
+\usepackage{amsmath}
+\usepackage{bbding}
+\usepackage{enumerate} % Allows different enumeration styles such as a,b,c,d... and i, ii, iii, iv, v, vi...
+\usepackage[inline]{enumitem} % Enables embedded enumerations in tabulars and such
+\usepackage{rotating} % For ratation of tables
+\usepackage{graphicx}
+\usepackage{appendix}
+\renewcommand{\appendixtocname}{Bilag}
+\graphicspath{{./grafik/}}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{longtable}
+\usepackage{pdfpages}
+\restylefloat{figure}
+\usepackage[bookmarksdepth=3]{hyperref} % PDF Bookmarks
+\usepackage{lscape} %Turnpage
+%Math
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{stmaryrd}
+%TIKZ AND DEPENDENCIES
+\usepackage{calc}
+\usepackage{ifthen}
+\usepackage{tikz}
+\usepackage{setup/tikz-uml}
+\usetikzlibrary{positioning,chains,fit,shapes,arrows,calc}
+%\usepackage[top=2cm, bottom=2cm, left=3cm, right=3cm]{geometry}
+%Spacing
+\usepackage{setspace}
+\onehalfspacing
+%Appendix
+\usepackage{appendix}
+
+
+%FAR COMMAND
+
+
+
+\newcommand{\farsiger}[2][ ]
+{
+  \ifthenelse{\equal{#1}{inline}}
+    {\todo[inline, size=\small, color=blue!40]{\textbf{Far:} #2}}
+    {{\includegraphics[height=2ex]{comments/bender}} \todo[size=\small, color=blue!40]{\textbf{Far:} #2}}
+}
+
+%TOPAKA COMMAND
+\newcommand{\topaka}[2][ ]
+{
+  \ifthenelse{\equal{#1}{inline}}
+    {\todo[inline, size=\small, color=red!90]{\textbf{Topaka:} #2}}
+    {{\includegraphics[height=2ex]{comments/topaka}} \todo[size=\small, color=red!90]{\textbf{Topaka:} #2}}
+}
+
+%MICHAEL COMMAND
+\newcommand{\malakahh}[2][ ]
+{
+  \ifthenelse{\equal{#1}{inline}}
+    {\todo[inline, size=\small, color=yellow!70]{\textbf{Malakahh:} #2}}
+    {{\includegraphics[height=2ex]{comments/michael}} \todo[size=\small, color=yellow!70]{\textbf{Malakahh:} #2}}
+}
+
+%DENNIS COMMAND
+\newcommand{\dennis}[2][ ]
+{
+  \ifthenelse{\equal{#1}{inline}}
+    {\todo[inline, size=\small, color=pink]{\textbf{Dennis:} #2}}
+    {{\includegraphics[height=2ex]{comments/dennis}} \todo[size=\small, color=pink]{\textbf{Dennis:} #2}}
+}
+
+%RUNE COMMAND
+\newcommand{\rune}[2][ ]
+{
+  \ifthenelse{\equal{#1}{inline}}
+    {\todo[inline, size=\small, color=brown!80]{\textbf{Rune:} #2}}
+    {{\includegraphics[height=2ex]{comments/rune}} \todo[size=\small, color=brown!80]{\textbf{Rune:} #2}}
+}
+
+%BENJAMIN COMMAND
+\newcommand{\jelly}[2][ ]
+{
+  \ifthenelse{\equal{#1}{inline}}
+    {\todo[inline, size=\small, color=orange!80]{\textbf{Jelly:} #2}}
+    {{\includegraphics[height=2ex]{comments/benjamin}} \todo[size=\small, color=orange!80]{\textbf{Jelly:} #2}}
+}
+
+%ANDERS COMMAND
+\newcommand{\anders}[2][ ]
+{
+  \ifthenelse{\equal{#1}{inline}}
+    {\todo[inline, size=\small, color=green!80]{\textbf{Vagner:} #2}}
+    {{\includegraphics[height=2ex]{comments/vagner}} \todo[size=\small, color=green!80]{\textbf{Vagner:} #2}}
+}
+\newcommand{\vagner}[2][ ]{\anders[#1]{#2}}
+
+% Dette environment bruges til at vise aktører og brugsmønstre "pænt"
+\newenvironment{descriptionbox}[1]%
+{
+  \par
+  \vspace{\baselineskip}
+  \setlength{\rightskip}{1cm}
+  \setlength{\leftskip}{1cm}
+  \addtolength{\textwidth}{-2cm}
+  \noindent
+  \rule{\textwidth}{1pt}
+  \begin{center}
+    \textbf{\textit{#1}}
+  \end{center}\vspace{-6pt}
+  \rule{\textwidth}{1pt}
+  \par
+}
+{
+  \\
+  \rule{\textwidth}{1pt}
+  \par
+  \vspace{\baselineskip}
+}
+
+%PIE CHART FUNCTION
+\newcommand{\slice}[5]{
+  \pgfmathparse{0.5*#2+0.5*#3}
+  \let\midangle\pgfmathresult
+
+  % slice
+   \pgfmathparse{0.5*rnd+0.3}
+   \let\randomrgb\pgfmathresult
+
+   \draw[thick, fill=#1] (0,0) -- (#2:1) arc (#2:#3:1) -- cycle;
+
+  % outer label
+  \node[label=\midangle:#5] at (\midangle:1) {};
+
+  % inner label
+  \pgfmathparse{min((#3-#2-10)/110*(-0.3),0)}
+  \let\temp\pgfmathresult
+  \pgfmathparse{max(\temp,-0.5) + 0.8}
+  \let\innerpos\pgfmathresult
+  \node at (\midangle:\innerpos) {#4};
+}
+
+%TIKZ COLORS
+\definecolor{blue}{RGB}{80,100,160}
+\definecolor{green}{RGB}{120,200,60}
+\definecolor{gray}{RGB}{220,220,220}
+\definecolor{lightgray}{RGB}{235,235,235}
+
+%ALGORITMER
+%\usepackage[lined,algonl,boxed]{algorithm2e}
+
+%KODE EKSEMPLER
+\usepackage{color}
+\usepackage{listings}
+\input{setup/language}
+
+%HEADER OPSTILLING
+\pagestyle{fancy}
+\fancyhead[LO, RE]{}
+
+\usepackage{hyperref}
+\usepackage[all]{hypcap}
+\hypersetup{
+    colorlinks=true,       % false: boxed links; true: colored links
+    linkcolor=black,       % color of internal links                   red
+    citecolor=black,       % color of links to bibliography            green
+    filecolor=black,       % color of file links                       magenta
+    urlcolor=black         % color of external links                   cyan
+    }
+
+%En af de 3 nedenunder fixer citet
+\setcitestyle{numbers}
+\bibliographystyle{unsrtnat}
+\newcommand{\BibTeX}{Bib\TeX}
+\renewcommand{\theenumii}{\arabic{enumii}.}
+\renewcommand{\labelenumii}{\theenumii}
+
+\renewcommand{\theenumiii}{\arabic{enumiii}.}
+\renewcommand{\labelenumiii}{\theenumiii}
+
+\let\origdoublepage\cleardoublepage
+\newcommand{\blankpage}{%
+  \clearpage
+  {\pagestyle{empty}\origdoublepage}%
+}
+\lstset{ captionpos=b, breaklines=true }
+
+\usepackage{import}
+\usepackage{caption}
