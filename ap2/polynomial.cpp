@@ -1,13 +1,5 @@
 
-#include <iostream>
-#include <sstream>
-#include <map>
-#include <algorithm> 
-#include <typeinfo>
-#include <type_traits>
-#include <initializer_list>
-#include <math.h>
-using namespace std;
+#include "polynomial.h"
 
 
 template <template <typename...> class Container>
@@ -18,49 +10,51 @@ template <> struct is_root_container<std::vector>   		: std::true_type {};
 template <> struct is_root_container<std::initializer_list> : std::true_type {};
 
 template<class T>
-class Polynomial
+double Polynomial<T>::ComputeIntegral(double firstPoint, double secondPoint)
 {
-public:
-	
-	//Constructors
-	Polynomial();
-	Polynomial(std::map<int, T>);
-	
-	//Desstructor
-	~Polynomial();
+	/*double result = 0;
+	std::pair<string, double> firstPointIntegral(cachedIntegral.GetFormula(), firstPoint);
+	std::pair<string, double> secondPointIntegral(cachedIntegral.GetFormula(), secondPoint);
 
-	//Additional functions
-	std::string GetFormula();
-	void ScalePolynomial(auto);
-	void AddRoot(auto);
-	void AddMultipleRoots(std::initializer_list<T>);
-	Polynomial CalculateDerivative();
-	double ValuateAtPoint(double);
+	auto first_search_result = integralResults.find(firstPointIntegral);
+	auto second_search_result = integralResults.find(secondPointIntegral);
+	if(first_search_result != integralResults.end())
+	{
 
-private:
-	
-	Polynomial CalculateIntegral();
-	std::map<int, T> coefficients;
-};
+	}
+	else
+	{
+
+	}
+
+
+	if(second_search_result != integralResults.end())
+	{
+
+	}
+	else
+	{
+
+	}*/
+
+}
+
 
 template<class T>
 Polynomial<T> Polynomial<T>::CalculateIntegral()
 {
-	std::map<int, T> derivative;
+	std::map<int, T> integral;
 
-	std::for_each(coefficients.begin(), coefficients.end(),
+	std::for_each(coefficients.rbegin(), coefficients.rend(),
 			[&](auto coefficient)
 			{ 
-				if((&coefficient)->first > 0)
-				{
-					int key = (&coefficient)->first - 1;
-					T value = (&coefficient)->first * (&coefficient)->second;
-					derivative.insert(std::pair<int,T>(key , value));
-				}
+					int key = (&coefficient)->first + 1;
+					T value = (&coefficient)->second / ((&coefficient)->first + 1);
+					integral[key] = value;
 			}
 		);
 
-	return Polynomial(derivative);
+	return Polynomial(integral);
 }
 
 template<class T>
@@ -68,18 +62,16 @@ Polynomial<T> Polynomial<T>::CalculateDerivative()
 {
 	std::map<int, T> derivative;
 
-	std::for_each(coefficients.begin(), coefficients.end(),
-			[&](auto coefficient)
-			{ 
-				if((&coefficient)->first > 0)
-				{
-					int key = (&coefficient)->first - 1;
-					T value = (&coefficient)->first * (&coefficient)->second;
-					derivative.insert(std::pair<int,T>(key , value));
-				}
-			}
-		);
-
+	for(auto const &coefficient: coefficients)
+	{
+		if(coefficient.first > 0)
+		{
+			int key = coefficient.first - 1;
+			T value = coefficient.first * coefficient.second;
+			derivative[key] = value;
+		}
+	}
+	
 	return Polynomial(derivative);
 }
 
@@ -88,6 +80,7 @@ Polynomial<T>::Polynomial()
 {
 	static_assert(std::is_floating_point<T>::value, "Has to be floating point type");
 	coefficients[0] = 0;
+	RecalculateFormula();
 }
 
 template<class T> 
@@ -100,13 +93,12 @@ Polynomial<T>::Polynomial(std::map<int, T> degreesTermsCoefficients)
 		coefficients[0] = 0;
 		return;
 	}
-	//Requirement
-	std::for_each(degreesTermsCoefficients.begin(), degreesTermsCoefficients.end(),
-			[&](auto coefficient)
-			{ 
-				coefficients.insert(std::pair<int, T>((&coefficient)->first, (&coefficient)->second));
-			}
-		);
+	//for(auto term: degreesTermsCoefficients)
+	//{
+		coefficients = degreesTermsCoefficients;
+		//coefficients.insert(std::pair<int, T>(term.first, term.second));
+	//}
+	CleanUp();
 }
 
 template<class T> 
@@ -115,18 +107,17 @@ Polynomial<T>::~Polynomial()
 }
 
 template<class T> 
-void Polynomial<T>::ScalePolynomial(auto scale)
-{		
-	std::for_each(coefficients.begin(), coefficients.end(),
-			[&](auto coefficient)
-			{ 
-				coefficients[(&coefficient)->first] = (&coefficient)->second * scale;
-			}
-		);
+void Polynomial<T>::ScalePolynomial(const auto scale)
+{			
+	for(auto &degree: coefficients)
+	{
+		degree.second = degree.second * scale;
+	}
+	CleanUp();
 }
 
 template<class T> 
-void Polynomial<T>::AddRoot(auto root)
+void Polynomial<T>::AddRoot(const auto root)
 {
 	for(auto ite = coefficients.rbegin(); ite != coefficients.rend(); ite++)
 	{
@@ -145,19 +136,17 @@ void Polynomial<T>::AddRoot(auto root)
 		
 		coefficients[key] = value * (-root);
 	}
+	CleanUp();
 }
 
 template<class T> 
-double Polynomial<T>::ValuateAtPoint(double point)
+double Polynomial<T>::ValuateAtPoint(const double point)
 {
 	double returnValue = 0;
-	std::for_each(coefficients.begin(), coefficients.end(),
-		[&](auto coefficient)
-		{ 
-
-			returnValue += pow(point, (&coefficient)->first) * (&coefficient)->second;
-		}
-	);
+	for(auto const &degree: coefficients)
+	{
+		returnValue += pow(point, degree.first) * degree.second;
+	}
 
 	return returnValue;
 }
@@ -171,16 +160,35 @@ void Polynomial<T>::AddMultipleRoots(std::initializer_list<T> roots)
 				AddRoot(root);
 			}
 		);
+	RecalculateFormula();
+}
+
+template<class T>
+void Polynomial<T>::CleanUp()
+{		
+	for(auto const &degree: coefficients)
+	{
+		if(degree.second == 0 && coefficients.size() > 1)
+		{
+			coefficients.erase(degree.first);
+		}
+		else if(degree.first != 0 &&degree.second == 0 && coefficients.size() == 1)
+		{
+			coefficients.erase(degree.first);
+			coefficients[0] = 0;
+		}
+	}
+
+	cachedIntegral = CalculateIntegral();
+	RecalculateFormula();
 }
 
 template<class T> 
-std::string Polynomial<T>::GetFormula()
+void Polynomial<T>::RecalculateFormula()
 {
 	std::stringstream  returnValue;
 	returnValue << "f(x) = ";
-	int i = 0;
 
-//use of auto: requirement 4
 	for(auto ite = coefficients.begin(); 
 		ite != coefficients.end(); 
 		ite++)
@@ -201,6 +209,11 @@ std::string Polynomial<T>::GetFormula()
 		ite--;
 	}
 
-	
-	return returnValue.str();
+	cachedFormula = returnValue.str();
+}
+
+template<class T> 
+std::string Polynomial<T>::GetFormula()
+{
+	return cachedFormula;
 }

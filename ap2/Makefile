@@ -1,5 +1,6 @@
 all: 
-	 g++ -std=c++14 main.cpp polynomial.cpp
+	 g++ -std=c++14 main.cpp polynomial.h polynomial.cpp
+	 #polynomial.cpp
 #CFLAGS = -std=c++14
 #OBJECTS = main.o 
 
