@@ -2,6 +2,15 @@
 #include "polynomial.h"
 
 
+template<typename T>
+struct Polynomial<T>::Impl
+{
+public:
+	std::map<int, T> coefficients;
+	std::string cachedFormula;
+	std::map<int, T> cachedIntegral;
+};
+
 template <template <typename...> class Container>
 struct is_root_container : std::false_type {};
 
@@ -9,10 +18,42 @@ template <> struct is_root_container<std::map>    			: std::true_type {};
 template <> struct is_root_container<std::vector>   		: std::true_type {};
 template <> struct is_root_container<std::initializer_list> : std::true_type {};
 
-template<class T>
+template<typename T> 
+Polynomial<T>::Polynomial():_impl(std::make_unique<Impl>())
+{
+	static_assert(std::is_floating_point<T>::value, "Has to be floating point type");
+	 _impl->coefficients[0] = 0;
+	//RecalculateFormula();
+}
+
+template<typename T> 
+Polynomial<T>::Polynomial(std::map<int, T> degreesTermsCoefficients):_impl(std::make_unique<Impl>())
+{
+	static_assert(std::is_floating_point<T>::value, "Has to be floating point type");
+	
+	if(degreesTermsCoefficients.empty())
+	{
+		_impl->coefficients[0] = 0;
+		return;
+	}
+	//for(auto term: degreesTermsCoefficients)
+	//{
+	 _impl->coefficients = degreesTermsCoefficients;
+	//	_impl->coefficients.insert(std::pair<int, T>(term.first, term.second));
+	//}
+	CleanUp();
+}
+
+
+/*template<typename T> 
+Polynomial<T>::~Polynomial()
+{
+}*/
+
+/*template<typename T>
 double Polynomial<T>::ComputeIntegral(double firstPoint, double secondPoint)
 {
-	/*double result = 0;
+	double result = 0;
 	std::pair<string, double> firstPointIntegral(cachedIntegral.GetFormula(), firstPoint);
 	std::pair<string, double> secondPointIntegral(cachedIntegral.GetFormula(), secondPoint);
 
@@ -35,17 +76,17 @@ double Polynomial<T>::ComputeIntegral(double firstPoint, double secondPoint)
 	else
 	{
 
-	}*/
+	}
 
 }
+*/
 
-
-template<class T>
+template<typename T>
 Polynomial<T> Polynomial<T>::CalculateIntegral()
 {
 	std::map<int, T> integral;
 
-	std::for_each(coefficients.rbegin(), coefficients.rend(),
+	std::for_each(_impl->coefficients.rbegin(), _impl->coefficients.rend(),
 			[&](auto coefficient)
 			{ 
 					int key = (&coefficient)->first + 1;
@@ -57,12 +98,12 @@ Polynomial<T> Polynomial<T>::CalculateIntegral()
 	return Polynomial(integral);
 }
 
-template<class T>
+template<typename T>
 Polynomial<T> Polynomial<T>::CalculateDerivative()
 {
 	std::map<int, T> derivative;
 
-	for(auto const &coefficient: coefficients)
+	for(auto const &coefficient: _impl->coefficients)
 	{
 		if(coefficient.first > 0)
 		{
@@ -75,75 +116,45 @@ Polynomial<T> Polynomial<T>::CalculateDerivative()
 	return Polynomial(derivative);
 }
 
-template<class T> 
-Polynomial<T>::Polynomial()
-{
-	static_assert(std::is_floating_point<T>::value, "Has to be floating point type");
-	coefficients[0] = 0;
-	RecalculateFormula();
-}
 
-template<class T> 
-Polynomial<T>::Polynomial(std::map<int, T> degreesTermsCoefficients)
-{
-	static_assert(std::is_floating_point<T>::value, "Has to be floating point type");
-	
-	if(degreesTermsCoefficients.empty())
-	{
-		coefficients[0] = 0;
-		return;
-	}
-	//for(auto term: degreesTermsCoefficients)
-	//{
-		coefficients = degreesTermsCoefficients;
-		//coefficients.insert(std::pair<int, T>(term.first, term.second));
-	//}
-	CleanUp();
-}
-
-template<class T> 
-Polynomial<T>::~Polynomial()
-{
-}
-
-template<class T> 
+template<typename T> 
 void Polynomial<T>::ScalePolynomial(const auto scale)
 {			
-	for(auto &degree: coefficients)
+	for(auto &degree: _impl->coefficients)
 	{
 		degree.second = degree.second * scale;
 	}
 	CleanUp();
 }
 
-template<class T> 
-void Polynomial<T>::AddRoot(const auto root)
+template<typename T> 
+void Polynomial<T>::AddRoot(double root)
 {
-	for(auto ite = coefficients.rbegin(); ite != coefficients.rend(); ite++)
+	for(auto ite = _impl->coefficients.rbegin(); ite != _impl->coefficients.rend(); ite++)
 	{
 		int key = ite->first;
 		T value = ite->second;
 
-		if(coefficients.count(key+1) > 0)
+		if(_impl->coefficients.count(key+1) > 0)
 		{
-			coefficients[key+1] = coefficients[key+1] + value;
+			_impl->coefficients[key+1] = _impl->coefficients[key+1] + value;
 		}
 		else
 		{
-			coefficients[key+1] =  value;
+			_impl->coefficients[key+1] =  value;
 			ite++;
 		}
 		
-		coefficients[key] = value * (-root);
+		_impl->coefficients[key] = value * (-root);
 	}
 	CleanUp();
 }
 
-template<class T> 
+template<typename T> 
 double Polynomial<T>::ValuateAtPoint(const double point)
 {
 	double returnValue = 0;
-	for(auto const &degree: coefficients)
+	for(auto const &degree: _impl->coefficients)
 	{
 		returnValue += pow(point, degree.first) * degree.second;
 	}
@@ -151,46 +162,45 @@ double Polynomial<T>::ValuateAtPoint(const double point)
 	return returnValue;
 }
 
-template<class T> 
+template<typename T> 
 void Polynomial<T>::AddMultipleRoots(std::initializer_list<T> roots)
 {
-	std::for_each(roots.begin(), roots.end(),
-			[&](T root)
-			{ 
-				AddRoot(root);
-			}
-		);
-	RecalculateFormula();
+	for(auto const &root: roots)
+	{
+		AddRoot(root);
+	}
 }
 
-template<class T>
+
+template<typename T>
 void Polynomial<T>::CleanUp()
 {		
-	for(auto const &degree: coefficients)
+	for(auto ite = _impl->coefficients.begin(); 
+		ite != _impl->coefficients.end(); 
+		ite++)
 	{
-		if(degree.second == 0 && coefficients.size() > 1)
+		if(ite->second == 0 && _impl->coefficients.size() > 1)
 		{
-			coefficients.erase(degree.first);
+			_impl->coefficients.erase(ite++);
 		}
-		else if(degree.first != 0 &&degree.second == 0 && coefficients.size() == 1)
+		else if(ite->first != 0 &&ite->second == 0 && _impl->coefficients.size() == 1)
 		{
-			coefficients.erase(degree.first);
-			coefficients[0] = 0;
+			_impl->coefficients.clear();
+			_impl->coefficients[0] = 0;
 		}
 	}
 
-	cachedIntegral = CalculateIntegral();
+	//cachedIntegral = CalculateIntegral();
 	RecalculateFormula();
 }
 
-template<class T> 
+template<typename T> 
 void Polynomial<T>::RecalculateFormula()
 {
 	std::stringstream  returnValue;
 	returnValue << "f(x) = ";
-
-	for(auto ite = coefficients.begin(); 
-		ite != coefficients.end(); 
+	for(auto ite = _impl->coefficients.begin(); 
+		ite != _impl->coefficients.end(); 
 		ite++)
 	{
 		if(ite->first == 0)
@@ -202,18 +212,59 @@ void Polynomial<T>::RecalculateFormula()
 			returnValue << ite->second << "x^" << ite->first;
 		}
 
-		if(++ite != coefficients.end())
+		if(++ite != _impl->coefficients.end())
 		{
 			returnValue << " + ";
 		}
 		ite--;
 	}
 
-	cachedFormula = returnValue.str();
+	_impl->cachedFormula = returnValue.str();
 }
 
-template<class T> 
+template<typename T> 
 std::string Polynomial<T>::GetFormula()
 {
-	return cachedFormula;
+	return _impl->cachedFormula;
+}
+
+template<typename T>
+Polynomial<T>::Polynomial(const Polynomial &input) : _impl(std::make_unique<Impl>(*input._impl))
+{
+}
+
+template<typename T>
+Polynomial<T>& Polynomial<T>::operator=(const Polynomial& rhs)
+{
+	*_impl = *rhs._impl;
+	return *this;
+}
+
+template<typename T>
+Polynomial<T> Polynomial<T>::operator*(const Polynomial& right)
+{
+	for(auto degree : this->_impl->coefficients)
+	{
+
+	}
+	return *this;
+}
+
+template<typename T>
+Polynomial<T> Polynomial<T>::operator+(const Polynomial& right)
+{
+	std::map<int, T> newPolynomiel = this->_impl->coefficients;
+
+	for(auto const &degree : right._impl->coefficients)
+	{
+		if(newPolynomiel.count(degree.first) > 0)
+		{
+			newPolynomiel[degree.first] += degree.second;
+		}	
+		else
+		{
+			newPolynomiel.insert(std::pair<int, T>(degree.first, degree.second));
+		}
+	}
+	return Polynomial<T>(newPolynomiel);
 }
