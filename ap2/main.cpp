@@ -12,7 +12,7 @@ Polynomial<float> pol1{};
 
 // Constructor for specific degree term coefficients.
 std::map<int, double> coefficients;
-coefficients[1] = 4;
+coefficients[1] = 4;coefficients[2] = 1;
 //coefficients[1] = 3;
 coefficients[0] = 5;
 //coefficients[105] = 5;
@@ -23,6 +23,7 @@ coefficients[0] = 5;
 
 Polynomial<double> pol2{coefficients};
 
+cout << "Printing degree term coefficient constructor result: " << pol2.ValuateAtPoint(5)<< "\n";
 std::map<int, double> coefficients1;
 coefficients1[1] = 1;
 //coefficients[1] = 3;
@@ -36,7 +37,6 @@ coefficients1[2] = 10;
 Polynomial<double> pol8{coefficients1};
 Polynomial<double> pol10 = pol2 * pol8;
 
-cout << "Printing degree term coefficient constructor result: " << pol10.GetFormula() << "\n";
 //cout << "Printing degree term coefficient constructor result: " << pol2.GetFormula() << "\n";
 
 // A method to scale the polynomial, i.e. multiply by a scalar value.

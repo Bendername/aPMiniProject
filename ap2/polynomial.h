@@ -34,22 +34,26 @@ public:
 	Polynomial  operator*(const Polynomial& right);
 
 	//Additional functions
-	std::string GetFormula();
+	std::string GetFormula() const;
 	void ScalePolynomial(auto);
 	void AddRoot(double);
 	void AddMultipleRoots(std::initializer_list<T>);
 	Polynomial CalculateDerivative();
 	double ValuateAtPoint(double);
-	double ComputeIntegral(double, double);
+	T ComputeIntegral(T, T);
 
 	//Polynomial<T>& operator=(const Polynomial& rhs);
 
-	Polynomial CalculateIntegral();
 private:
-	//Polynomial<T> cachedIntegral;
-		struct Impl;
+	struct Impl;
 	std::unique_ptr<Impl> _impl;
-	void RecalculateFormula();
+
+	std::map<int, T> GetCachedIntegral() const;
+	std::map<int, T> CalculateIntegral();
+	mutable std::atomic<bool> cachedIntegralIsValid{false};
+	mutable std::atomic<bool> cachedFormulaIsValid{false};
+	mutable std::mutex integralLock;
+	mutable std::mutex formulaLock;
 	void CleanUp();
 };
 

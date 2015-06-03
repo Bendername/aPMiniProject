@@ -5,9 +5,9 @@ template<typename T>
 struct Polynomial<T>::Impl
 {
 public:
-	std::map<int, T> coefficients;
+	mutable std::map<int, T> coefficients;
 	std::string cachedFormula;
-	std::map<int, T> cachedIntegral;
+	mutable std::map<int, T> cachedIntegral;
 };
 
 template <template <typename...> class Container>
@@ -22,7 +22,6 @@ Polynomial<T>::Polynomial():_impl(std::make_unique<Impl>())
 {
 	static_assert(std::is_floating_point<T>::value, "Has to be floating point type");
 	 _impl->coefficients[0] = 0;
-	//RecalculateFormula();
 }
 
 template<typename T> 
@@ -35,53 +34,77 @@ Polynomial<T>::Polynomial(std::map<int, T> degreesTermsCoefficients):_impl(std::
 		_impl->coefficients[0] = 0;
 		return;
 	}
-	//for(auto term: degreesTermsCoefficients)
-	//{
 	 _impl->coefficients = degreesTermsCoefficients;
-	//	_impl->coefficients.insert(std::pair<int, T>(term.first, term.second));
-	//}
+
 	CleanUp();
 }
 
+template<typename T> 
+std::map<int, T> Polynomial<T>::GetCachedIntegral() const
+{
+	std::lock_guard<std::mutex> lock(integralLock);
+
+	if(cachedIntegralIsValid)
+	{
+		return _impl->cachedIntegral;
+	}
+	else
+	{
+		std::map<int, T> integral;
+
+		std::for_each(_impl->coefficients.rbegin(), _impl->coefficients.rend(),
+			[&](auto coefficient)
+			{ 
+					int key = (&coefficient)->first + 1;
+					T value = (&coefficient)->second / ((&coefficient)->first + 1);
+					integral[key] = value;
+			}
+		);
+		_impl->cachedIntegral = integral;	
+		cachedIntegralIsValid = true;
+		return _impl->cachedIntegral;
+	}
+
+}
 
 /*template<typename T> 
 Polynomial<T>::~Polynomial()
 {
 }*/
 
-/*template<typename T>
-double Polynomial<T>::ComputeIntegral(double firstPoint, double secondPoint)
+template<typename T>
+T Polynomial<T>::ComputeIntegral(T firstPoint, T secondPoint)
 {
-	double result = 0;
-	std::pair<string, double> firstPointIntegral(cachedIntegral.GetFormula(), firstPoint);
-	std::pair<string, double> secondPointIntegral(cachedIntegral.GetFormula(), secondPoint);
+	std::atomic<T> result{0};
+	std::map<int, T> storedIntegral = GetCachedIntegral();
 
-	auto first_search_result = integralResults.find(firstPointIntegral);
-	auto second_search_result = integralResults.find(secondPointIntegral);
-	if(first_search_result != integralResults.end())
+	std::thread first ([&result, &storedIntegral, &firstPoint]()
 	{
+		for(auto const &degree: storedIntegral)
+		{
+			T test = pow(firstPoint, degree.first) * degree.second;
+			result =result - test;;
+		}
+	});
 
-	}
-	else
+	std::thread second ([&result, &storedIntegral, &secondPoint]()
 	{
+		for(auto const &degree: storedIntegral)
+		{
+			T test = pow(secondPoint, degree.first) * degree.second;
+			result =result + test;;
+		}
+	});
 
-	}
+	first.join();
+	second.join();
 
-
-	if(second_search_result != integralResults.end())
-	{
-
-	}
-	else
-	{
-
-	}
+	return result;
 
 }
-*/
 
 template<typename T>
-Polynomial<T> Polynomial<T>::CalculateIntegral()
+std::map<int, T> Polynomial<T>::CalculateIntegral() 
 {
 	std::map<int, T> integral;
 
@@ -94,7 +117,7 @@ Polynomial<T> Polynomial<T>::CalculateIntegral()
 			}
 		);
 
-	return Polynomial(integral);
+	return integral;
 }
 
 template<typename T>
@@ -152,10 +175,22 @@ void Polynomial<T>::AddRoot(double root)
 template<typename T> 
 double Polynomial<T>::ValuateAtPoint(const double point)
 {
-	double returnValue = 0;
+	std::vector<std::thread *> threadContainer;
+	std::atomic<double> returnValue{0};
+
 	for(auto const &degree: _impl->coefficients)
 	{
-		returnValue += pow(point, degree.first) * degree.second;
+		threadContainer.push_back(new std::thread([&returnValue, &degree, &point]()
+			{
+				double valuate = pow(point, degree.first) * degree.second;
+				returnValue = returnValue + valuate;
+			}));
+	}
+
+	for(auto &aThread : threadContainer)
+	{
+		aThread->join();
+		delete aThread;
 	}
 
 	return returnValue;
@@ -169,7 +204,6 @@ void Polynomial<T>::AddMultipleRoots(std::initializer_list<T> roots)
 		AddRoot(root);
 	}
 }
-
 
 template<typename T>
 void Polynomial<T>::CleanUp()
@@ -189,42 +223,47 @@ void Polynomial<T>::CleanUp()
 		}
 	}
 
-	//cachedIntegral = CalculateIntegral();
-	RecalculateFormula();
+	cachedIntegralIsValid = false;
+	cachedFormulaIsValid = false;
 }
 
 template<typename T> 
-void Polynomial<T>::RecalculateFormula()
+std::string Polynomial<T>::GetFormula() const
 {
-	std::stringstream  returnValue;
-	returnValue << "f(x) = ";
-	for(auto ite = _impl->coefficients.begin(); 
-		ite != _impl->coefficients.end(); 
-		ite++)
+	std::lock_guard<std::mutex> lock(formulaLock);
+
+	if(cachedFormulaIsValid)
 	{
-		if(ite->first == 0)
-		{
-			returnValue << ite->second;
-		}
-		else
-		{
-			returnValue << ite->second << "x^" << ite->first;
-		}
-
-		if(++ite != _impl->coefficients.end())
-		{
-			returnValue << " + ";
-		}
-		ite--;
+		return _impl->cachedFormula;
 	}
+	else
+	{
+		std::stringstream  returnValue;
+		returnValue << "f(x) = ";
+		for(auto ite = _impl->coefficients.begin(); 
+			ite != _impl->coefficients.end(); 
+			ite++)
+		{
+			if(ite->first == 0)
+			{
+				returnValue << ite->second;
+			}
+			else
+			{
+				returnValue << ite->second << "x^" << ite->first;
+			}
 
-	_impl->cachedFormula = returnValue.str();
-}
+			if(++ite != _impl->coefficients.end())
+			{
+				returnValue << " + ";
+			}
+			ite--;
+		}
 
-template<typename T> 
-std::string Polynomial<T>::GetFormula()
-{
-	return _impl->cachedFormula;
+		_impl->cachedFormula = returnValue.str();
+		cachedFormulaIsValid = true;
+		return _impl->cachedFormula;
+	}
 }
 
 template<typename T>
