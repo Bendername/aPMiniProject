@@ -1,7 +1,6 @@
 
 #include "polynomial.h"
 
-
 template<typename T>
 struct Polynomial<T>::Impl
 {
@@ -243,12 +242,58 @@ Polynomial<T>& Polynomial<T>::operator=(const Polynomial& rhs)
 template<typename T>
 Polynomial<T> Polynomial<T>::operator*(const Polynomial& right)
 {
+	std::vector<std::future<std::map<int, T>>> productResults;
+
 	for(auto degree : this->_impl->coefficients)
 	{
+    	productResults.push_back(std::async(std::launch::async, [&right](int power, T coefficient)
+    		{	
+    			std::map<int, T> productResult;
 
+				std::for_each(right._impl->coefficients.rbegin(), right._impl->coefficients.rend(),
+				[&coefficient, &productResult, &power](auto const & right_coefficient)
+				{ 
+					int key = right_coefficient.first + power;
+					T value = right_coefficient.second * coefficient;
+					if(productResult.count(key) > 0)
+					{
+						productResult[key] += value;
+					}
+					else
+					{
+						productResult[key] = value;
+					}
+				});
+
+    			return productResult; 
+    		}, 
+    		degree.first, degree.second
+    		));
 	}
-	return *this;
+	std::mutex result_mutex;
+	std::map<int, T> fullResult{};
+
+	std::for_each(productResults.begin(), productResults.end(),[&fullResult, &result_mutex](auto &asyncResult)
+	{
+		auto result = asyncResult.get();
+		std::lock_guard<std::mutex> lock(result_mutex);
+		for(auto const & pair : result)
+		{
+				if(fullResult.count(pair.first) > 0)
+				{
+					fullResult[pair.first] += pair.second;
+				}
+				else
+				{
+					fullResult[pair.first] += pair.second;
+				}
+		}
+	});
+
+	return Polynomial<T>(fullResult);
 }
+
+
 
 template<typename T>
 Polynomial<T> Polynomial<T>::operator+(const Polynomial& right)

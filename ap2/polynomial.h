@@ -9,6 +9,10 @@
 #include <initializer_list>
 #include <memory>
 #include <math.h>
+#include <thread>
+#include <atomic>
+#include <future>
+#include <mutex>
 using namespace std;
 
 template<typename T> 
