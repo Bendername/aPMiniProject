@@ -1,6 +1,8 @@
 
 #include "polynomial.h"
 
+//Struct for pImpl
+//Used to satisfy requirement 7
 template<typename T>
 struct Polynomial<T>::Impl
 {
@@ -10,20 +12,17 @@ public:
 	mutable std::map<int, T> cachedIntegral;
 };
 
-template <template <typename...> class Container>
-struct is_root_container : std::false_type {};
-
-template <> struct is_root_container<std::map>    			: std::true_type {};
-template <> struct is_root_container<std::vector>   		: std::true_type {};
-template <> struct is_root_container<std::initializer_list> : std::true_type {};
-
+/* Constructors */
+//Default
 template<typename T> 
 Polynomial<T>::Polynomial():_impl(std::make_unique<Impl>())
 {
+	//Requirement 8 in order for the function to comply with requirement 2
 	static_assert(std::is_floating_point<T>::value, "Has to be floating point type");
 	 _impl->coefficients[0] = 0;
 }
 
+//Creation from a map
 template<typename T> 
 Polynomial<T>::Polynomial(std::map<int, T> degreesTermsCoefficients):_impl(std::make_unique<Impl>())
 {
@@ -39,11 +38,22 @@ Polynomial<T>::Polynomial(std::map<int, T> degreesTermsCoefficients):_impl(std::
 	CleanUp();
 }
 
+//Copy constructor
+template<typename T>
+Polynomial<T>::Polynomial(const Polynomial &input) : _impl(std::make_unique<Impl>(*input._impl))
+{
+}
+
+//Move Semantics
+
+
+//Requirement 6
 template<typename T> 
 std::map<int, T> Polynomial<T>::GetCachedIntegral() const
 {
 	std::lock_guard<std::mutex> lock(integralLock);
 
+	//Check if the cached integral data is valid otherwise recalculate new data
 	if(cachedIntegralIsValid)
 	{
 		return _impl->cachedIntegral;
@@ -67,11 +77,7 @@ std::map<int, T> Polynomial<T>::GetCachedIntegral() const
 
 }
 
-/*template<typename T> 
-Polynomial<T>::~Polynomial()
-{
-}*/
-
+//Implementation of requirement: 1.h
 template<typename T>
 T Polynomial<T>::ComputeIntegral(T firstPoint, T secondPoint)
 {
@@ -82,8 +88,8 @@ T Polynomial<T>::ComputeIntegral(T firstPoint, T secondPoint)
 	{
 		for(auto const &degree: storedIntegral)
 		{
-			T test = pow(firstPoint, degree.first) * degree.second;
-			result =result - test;;
+			T valuate = std::pow(firstPoint, degree.first) * degree.second;
+			result =result - valuate;;
 		}
 	});
 
@@ -91,8 +97,8 @@ T Polynomial<T>::ComputeIntegral(T firstPoint, T secondPoint)
 	{
 		for(auto const &degree: storedIntegral)
 		{
-			T test = pow(secondPoint, degree.first) * degree.second;
-			result =result + test;;
+			T valuate = std::pow(secondPoint, degree.first) * degree.second;
+			result =result + valuate;;
 		}
 	});
 
@@ -103,28 +109,14 @@ T Polynomial<T>::ComputeIntegral(T firstPoint, T secondPoint)
 
 }
 
-template<typename T>
-std::map<int, T> Polynomial<T>::CalculateIntegral() 
-{
-	std::map<int, T> integral;
-
-	std::for_each(_impl->coefficients.rbegin(), _impl->coefficients.rend(),
-			[&](auto coefficient)
-			{ 
-					int key = (&coefficient)->first + 1;
-					T value = (&coefficient)->second / ((&coefficient)->first + 1);
-					integral[key] = value;
-			}
-		);
-
-	return integral;
-}
-
+//Implementation of requirement: 1.g
 template<typename T>
 Polynomial<T> Polynomial<T>::CalculateDerivative()
 {
 	std::map<int, T> derivative;
 
+	//Use of auto and const.
+	//Requirement: 4 & 5
 	for(auto const &coefficient: _impl->coefficients)
 	{
 		if(coefficient.first > 0)
@@ -138,7 +130,7 @@ Polynomial<T> Polynomial<T>::CalculateDerivative()
 	return Polynomial(derivative);
 }
 
-
+//Implementation of requirement 1.c
 template<typename T> 
 void Polynomial<T>::ScalePolynomial(const auto scale)
 {			
@@ -149,9 +141,11 @@ void Polynomial<T>::ScalePolynomial(const auto scale)
 	CleanUp();
 }
 
+//Implementation of requirement: 1.d
 template<typename T> 
 void Polynomial<T>::AddRoot(double root)
 {
+	//Use of the Distributivity law to add a root to the polynomial
 	for(auto ite = _impl->coefficients.rbegin(); ite != _impl->coefficients.rend(); ite++)
 	{
 		int key = ite->first;
@@ -172,17 +166,30 @@ void Polynomial<T>::AddRoot(double root)
 	CleanUp();
 }
 
+//Implementation of requirement: 1.e
 template<typename T> 
-double Polynomial<T>::ValuateAtPoint(const double point)
+void Polynomial<T>::AddMultipleRoots(std::initializer_list<T> roots)
+{
+	for(auto const &root: roots)
+	{
+		AddRoot(root);
+	}
+}
+
+//Implementation of requirement: 1.f
+template<typename T> 
+T Polynomial<T>::ValuateAtPoint(const T point)
 {
 	std::vector<std::thread *> threadContainer;
-	std::atomic<double> returnValue{0};
+	std::atomic<T> returnValue{0};
 
 	for(auto const &degree: _impl->coefficients)
 	{
+		//Cache threads to they can be joined later
+		//Requirement 9: use of lambda to create an asynchronus compuation for the value of a point
 		threadContainer.push_back(new std::thread([&returnValue, &degree, &point]()
 			{
-				double valuate = pow(point, degree.first) * degree.second;
+				double valuate = std::pow(point, degree.first) * degree.second;
 				returnValue = returnValue + valuate;
 			}));
 	}
@@ -196,37 +203,7 @@ double Polynomial<T>::ValuateAtPoint(const double point)
 	return returnValue;
 }
 
-template<typename T> 
-void Polynomial<T>::AddMultipleRoots(std::initializer_list<T> roots)
-{
-	for(auto const &root: roots)
-	{
-		AddRoot(root);
-	}
-}
-
-template<typename T>
-void Polynomial<T>::CleanUp()
-{		
-	for(auto ite = _impl->coefficients.begin(); 
-		ite != _impl->coefficients.end(); 
-		ite++)
-	{
-		if(ite->second == 0 && _impl->coefficients.size() > 1)
-		{
-			_impl->coefficients.erase(ite++);
-		}
-		else if(ite->first != 0 &&ite->second == 0 && _impl->coefficients.size() == 1)
-		{
-			_impl->coefficients.clear();
-			_impl->coefficients[0] = 0;
-		}
-	}
-
-	cachedIntegralIsValid = false;
-	cachedFormulaIsValid = false;
-}
-
+//Used to print the result
 template<typename T> 
 std::string Polynomial<T>::GetFormula() const
 {
@@ -266,10 +243,7 @@ std::string Polynomial<T>::GetFormula() const
 	}
 }
 
-template<typename T>
-Polynomial<T>::Polynomial(const Polynomial &input) : _impl(std::make_unique<Impl>(*input._impl))
-{
-}
+/* Operator */
 
 template<typename T>
 Polynomial<T>& Polynomial<T>::operator=(const Polynomial& rhs)
@@ -278,11 +252,38 @@ Polynomial<T>& Polynomial<T>::operator=(const Polynomial& rhs)
 	return *this;
 }
 
+
+//Implementaion of requirement: 1.i
+template<typename T>
+Polynomial<T> Polynomial<T>::operator+(const Polynomial& right)
+{
+	//Simply adds the two polynomial together
+	std::map<int, T> newPolynomiel = this->_impl->coefficients;
+
+	for(auto const &degree : right._impl->coefficients)
+	{
+		if(newPolynomiel.count(degree.first) > 0)
+		{
+			newPolynomiel[degree.first] += degree.second;
+		}	
+		else
+		{
+			newPolynomiel.insert(std::pair<int, T>(degree.first, degree.second));
+		}
+	}
+	return Polynomial<T>(newPolynomiel);
+}
+
+//Implementaion of requirement: 1.j
 template<typename T>
 Polynomial<T> Polynomial<T>::operator*(const Polynomial& right)
 {
 	std::vector<std::future<std::map<int, T>>> productResults;
 
+	//Requirement 10
+	//productResult = f(x)*g(x)
+	//Takes each degree concurrently from the leftmost polynomial (f(x)) 
+	//	and multiply with each degree from the rightmost polynomial(g(X))
 	for(auto degree : this->_impl->coefficients)
 	{
     	productResults.push_back(std::async(std::launch::async, [&right](int power, T coefficient)
@@ -312,6 +313,7 @@ Polynomial<T> Polynomial<T>::operator*(const Polynomial& right)
 	std::mutex result_mutex;
 	std::map<int, T> fullResult{};
 
+	//These results from the above standing calculations are then added together to get the final result.
 	std::for_each(productResults.begin(), productResults.end(),[&fullResult, &result_mutex](auto &asyncResult)
 	{
 		auto result = asyncResult.get();
@@ -333,22 +335,28 @@ Polynomial<T> Polynomial<T>::operator*(const Polynomial& right)
 }
 
 
+/* Helper Functions */
 
+//CleanUp -> should be called everytime the polynomial is changed
+//Removed "dead" degrees & sets cached data as invalid
 template<typename T>
-Polynomial<T> Polynomial<T>::operator+(const Polynomial& right)
-{
-	std::map<int, T> newPolynomiel = this->_impl->coefficients;
-
-	for(auto const &degree : right._impl->coefficients)
+void Polynomial<T>::CleanUp()
+{		
+	for(auto ite = _impl->coefficients.begin(); 
+		ite != _impl->coefficients.end(); 
+		ite++)
 	{
-		if(newPolynomiel.count(degree.first) > 0)
+		if(ite->second == 0 && _impl->coefficients.size() > 1)
 		{
-			newPolynomiel[degree.first] += degree.second;
-		}	
-		else
+			_impl->coefficients.erase(ite++);
+		}
+		else if(ite->first != 0 &&ite->second == 0 && _impl->coefficients.size() == 1)
 		{
-			newPolynomiel.insert(std::pair<int, T>(degree.first, degree.second));
+			_impl->coefficients.clear();
+			_impl->coefficients[0] = 0;
 		}
 	}
-	return Polynomial<T>(newPolynomiel);
+
+	cachedIntegralIsValid = false;
+	cachedFormulaIsValid = false;
 }
