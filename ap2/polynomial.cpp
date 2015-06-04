@@ -1,4 +1,9 @@
-
+/*
+//Student	: Anders Bender
+//Study no	: 20112715
+//Username	: abende11
+//Email		: abende11@student.aau.dk
+*/
 #include "polynomial.h"
 
 //Struct for pImpl
@@ -22,10 +27,11 @@ Polynomial<T>::Polynomial():_impl(std::make_unique<Impl>())
 	 _impl->coefficients[0] = 0;
 }
 
-//Creation from a map
+//Implementation for Requirement: 1.b
 template<typename T> 
 Polynomial<T>::Polynomial(std::map<int, T> degreesTermsCoefficients):_impl(std::make_unique<Impl>())
 {
+	//Requirement 8 in order for the function to comply with requirement 2
 	static_assert(std::is_floating_point<T>::value, "Has to be floating point type");
 	
 	if(degreesTermsCoefficients.empty())
@@ -41,13 +47,15 @@ Polynomial<T>::Polynomial(std::map<int, T> degreesTermsCoefficients):_impl(std::
 //Copy constructor
 template<typename T>
 Polynomial<T>::Polynomial(const Polynomial &input) : _impl(std::make_unique<Impl>(*input._impl))
-{
-}
+{}
 
-//Move Semantics
+//Move constructor
+//Implementation of Requirement: 7
+template<typename T>
+Polynomial<T>::Polynomial(Polynomial&& input) : _impl(std::move(input)._impl) 
+{}
 
-
-//Requirement 6
+//Implementation of Requirement: 6
 template<typename T> 
 std::map<int, T> Polynomial<T>::GetCachedIntegral() const
 {
@@ -62,7 +70,7 @@ std::map<int, T> Polynomial<T>::GetCachedIntegral() const
 	{
 		std::map<int, T> integral;
 
-		std::for_each(_impl->coefficients.rbegin(), _impl->coefficients.rend(),
+		std::for_each(_impl->coefficients.crbegin(), _impl->coefficients.crend(),
 			[&](auto coefficient)
 			{ 
 					int key = (&coefficient)->first + 1;
@@ -77,9 +85,9 @@ std::map<int, T> Polynomial<T>::GetCachedIntegral() const
 
 }
 
-//Implementation of requirement: 1.h
+//Implementation of Requirement: 1.h
 template<typename T>
-T Polynomial<T>::ComputeIntegral(T firstPoint, T secondPoint)
+T Polynomial<T>::ComputeIntegral(const T& firstPoint, const T& secondPoint)
 {
 	std::atomic<T> result{0};
 	std::map<int, T> storedIntegral = GetCachedIntegral();
@@ -89,7 +97,7 @@ T Polynomial<T>::ComputeIntegral(T firstPoint, T secondPoint)
 		for(auto const &degree: storedIntegral)
 		{
 			T valuate = std::pow(firstPoint, degree.first) * degree.second;
-			result =result - valuate;;
+			result = result - valuate;;
 		}
 	});
 
@@ -109,7 +117,7 @@ T Polynomial<T>::ComputeIntegral(T firstPoint, T secondPoint)
 
 }
 
-//Implementation of requirement: 1.g
+//Implementation of Requirement: 1.g
 template<typename T>
 Polynomial<T> Polynomial<T>::CalculateDerivative()
 {
@@ -130,9 +138,9 @@ Polynomial<T> Polynomial<T>::CalculateDerivative()
 	return Polynomial(derivative);
 }
 
-//Implementation of requirement 1.c
+//Implementation of Requirement 1.c
 template<typename T> 
-void Polynomial<T>::ScalePolynomial(const auto scale)
+void Polynomial<T>::ScalePolynomial(const T& scale)
 {			
 	for(auto &degree: _impl->coefficients)
 	{
@@ -141,9 +149,9 @@ void Polynomial<T>::ScalePolynomial(const auto scale)
 	CleanUp();
 }
 
-//Implementation of requirement: 1.d
+//Implementation of Requirement: 1.d
 template<typename T> 
-void Polynomial<T>::AddRoot(double root)
+void Polynomial<T>::AddRoot(const T& root)
 {
 	//Use of the Distributivity law to add a root to the polynomial
 	for(auto ite = _impl->coefficients.rbegin(); ite != _impl->coefficients.rend(); ite++)
@@ -166,9 +174,9 @@ void Polynomial<T>::AddRoot(double root)
 	CleanUp();
 }
 
-//Implementation of requirement: 1.e
+//Implementation of Requirement: 1.e
 template<typename T> 
-void Polynomial<T>::AddMultipleRoots(std::initializer_list<T> roots)
+void Polynomial<T>::AddMultipleRootsInitList(std::initializer_list<T> roots)
 {
 	for(auto const &root: roots)
 	{
@@ -176,9 +184,9 @@ void Polynomial<T>::AddMultipleRoots(std::initializer_list<T> roots)
 	}
 }
 
-//Implementation of requirement: 1.f
+//Implementation of Requirement: 1.f
 template<typename T> 
-T Polynomial<T>::ValuateAtPoint(const T point)
+T Polynomial<T>::ValuateAtPoint(const T& point)
 {
 	std::vector<std::thread *> threadContainer;
 	std::atomic<T> returnValue{0};
@@ -203,7 +211,7 @@ T Polynomial<T>::ValuateAtPoint(const T point)
 	return returnValue;
 }
 
-//Used to print the result
+//Used to print the polynomial
 template<typename T> 
 std::string Polynomial<T>::GetFormula() const
 {
@@ -244,7 +252,6 @@ std::string Polynomial<T>::GetFormula() const
 }
 
 /* Operator */
-
 template<typename T>
 Polynomial<T>& Polynomial<T>::operator=(const Polynomial& rhs)
 {
